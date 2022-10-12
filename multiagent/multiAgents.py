@@ -113,6 +113,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
     Your minimax agent (question 2)
     """
 
+    #This algorithm is based on the of the minimax search algorithm on page 8 of lecture slide 5
     def getAction(self, gameState):
         """
         Returns the minimax action from the current gameState using self.depth
@@ -136,83 +137,88 @@ class MinimaxAgent(MultiAgentSearchAgent):
         gameState.isLose():
         Returns whether or not the game state is a losing state
         """
-
-        def maxValue(gameState,depth, first):
-            if gameState.isWin() or gameState.isLose() or (depth + 1)==self.depth:  
+        
+        #Calculates max-value for the player aka. agent 0
+        def maxValue(gameState,depth, returnAction):
+            if gameState.isWin() or gameState.isLose() or depth==self.depth: #checks for terminal state
                 return self.evaluationFunction(gameState)
-            value = -math.inf
-            bestAction=''
-            for action in gameState.getLegalActions(0):
+            bestValue = -math.inf
+            bestAction = '' 
+            for action in gameState.getLegalActions(0): #tries to find the best action and its respective value amongs the action set
                 successor= gameState.generateSuccessor(0,action)
-                newValue = minValue(successor,depth + 1,1, False)
-                if newValue > value:
-                    bestAction, value = action,newValue
-            return bestAction if first else value 
+                newValue = minValue(successor,depth,1, False)
+                if newValue > bestValue:
+                    bestAction, bestValue = action, newValue
+            return bestAction if returnAction else bestValue #returns either the best action or its respective value depending on returnAction boolean
         
-        def minValue(gameState,depth, agentIndex, first):
-            if gameState.isWin() or gameState.isLose(): 
+        #Calculates min-value for the ghosts aka. agents 1, 2 etc.
+        def minValue(gameState,depth, agentIndex, returnAction): 
+            if gameState.isWin() or gameState.isLose(): #checks for terminal state 
                 return self.evaluationFunction(gameState)
-            value = math.inf
-            bestAction=''
-            for action in gameState.getLegalActions(agentIndex):
+            bestValue = math.inf
+            bestAction = ''
+            for action in gameState.getLegalActions(agentIndex): #tries to find the best action and its respective value amongs the action set
                 successor= gameState.generateSuccessor(agentIndex,action)
-                if agentIndex == (gameState.getNumAgents() - 1):
-                    newValue = maxValue(successor,depth, False)
-                else:
+                if agentIndex == (gameState.getNumAgents() - 1): #checks if the next agent is the player
+                    newValue = maxValue(successor,depth+1, False)
+                else: #next agent is another ghost
                     newValue = minValue(successor,depth,agentIndex+1, False)
-                if newValue < value:
-                    bestAction, value = action,newValue
-            return bestAction if first else value 
+                if newValue < bestValue:
+                    bestAction, bestValue = action,newValue
+            return bestAction if returnAction else bestValue #returns either the best action or its respective value depending on returnAction boolean
         
-        return maxValue(gameState,-1,True)
+        return maxValue(gameState,0,True) #return best action, player starts so agentIndex=0
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 3)
     """
 
+    #This algorithm is based on the of the alpha-beta search algorithm on page 21 of lecture slide 5
     def getAction(self, gameState):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
         
+        #Calculates max-value for the player aka. agent 0
         def maxValue(gameState,depth,alpha, beta):
-            if gameState.isWin() or gameState.isLose() or (depth + 1)==self.depth:
+            if gameState.isWin() or gameState.isLose() or depth ==self.depth: #checks for terminal state
                 return self.evaluationFunction(gameState)
             value = -math.inf
             alpha1 = alpha
-            for action in gameState.getLegalActions(0):
+            for action in gameState.getLegalActions(0): #tries to find the best value amongs the action set
                 successor= gameState.generateSuccessor(0,action)
-                value = max (value,minValue(successor,depth + 1,1,alpha1,beta))
+                value = max (value,minValue(successor,depth,1,alpha1,beta))
                 if value > beta:
                     return value
                 alpha1 = max(alpha1,value)
             return value
         
+        #Calculates min-value for the ghosts aka. agents 1, 2 etc.
         def minValue(gameState,depth,agentIndex,alpha,beta):
-            if gameState.isWin() or gameState.isLose(): 
+            if gameState.isWin() or gameState.isLose(): #checks for terminal state
                 return self.evaluationFunction(gameState)
             value = math.inf
             beta1 = beta
-            for action in gameState.getLegalActions(agentIndex):
+            for action in gameState.getLegalActions(agentIndex): #tries to find the best value amongs the action set
                 successor= gameState.generateSuccessor(agentIndex,action)
-                if agentIndex == (gameState.getNumAgents()-1):
-                    value = min (value,maxValue(successor,depth,alpha,beta1))
-                else:
+                if agentIndex == (gameState.getNumAgents()-1): #checks if the next agent is the player
+                    value = min (value,maxValue(successor,depth+1,alpha,beta1))
+                else: #next agent is another ghost
                     value = min(value,minValue(successor,depth,agentIndex+1,alpha,beta1))
                 if value < alpha:
                     return value
                 beta1 = min(beta1,value)
             return value
 
-        # Alpha-Beta Pruning
+        #basicly the same as maxValue but returns action and not value
         currentScore = -math.inf
-        returnAction = ''
         alpha, beta = -math.inf, math.inf
-        for action in gameState.getLegalActions(0):
-            nextState = gameState.generateSuccessor(0,action)
-            score = minValue(nextState,0,1,alpha,beta)
+        returnAction = ''
+        for action in gameState.getLegalActions(0): #returns best action to take
+            successor = gameState.generateSuccessor(0,action)
+            score = minValue(successor,0,1,alpha,beta)
             if score > currentScore:
                 returnAction, currentScore = action, score
             if score > beta:
