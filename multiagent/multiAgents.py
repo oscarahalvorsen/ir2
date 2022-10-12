@@ -13,6 +13,7 @@
 
 
 import math
+from pickle import FALSE
 from util import manhattanDistance
 from game import Directions
 import random, util
@@ -136,35 +137,34 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
 
-        def maxValue(gameState,depth):
+        def maxValue(gameState,depth, first):
             if gameState.isWin() or gameState.isLose() or (depth + 1)==self.depth:  
                 return self.evaluationFunction(gameState)
             value = -math.inf
+            bestAction=''
             for action in gameState.getLegalActions(0):
                 successor= gameState.generateSuccessor(0,action)
-                value = max (value,minValue(successor,depth + 1,1))
-            return value
+                newValue = minValue(successor,depth + 1,1, False)
+                if newValue > value:
+                    bestAction, value = action,newValue
+            return bestAction if first else value 
         
-        def minValue(gameState,depth, agentIndex):
+        def minValue(gameState,depth, agentIndex, first):
             if gameState.isWin() or gameState.isLose(): 
                 return self.evaluationFunction(gameState)
             value = math.inf
+            bestAction=''
             for action in gameState.getLegalActions(agentIndex):
                 successor= gameState.generateSuccessor(agentIndex,action)
                 if agentIndex == (gameState.getNumAgents() - 1):
-                    value = min (value,maxValue(successor,depth))
+                    newValue = maxValue(successor,depth, False)
                 else:
-                    value = min(value,minValue(successor,depth,agentIndex+1))
-            return value
+                    newValue = minValue(successor,depth,agentIndex+1, False)
+                if newValue < value:
+                    bestAction, value = action,newValue
+            return bestAction if first else value 
         
-        currentScore = -math.inf
-        returnAction = ''
-        for action in gameState.getLegalActions(0):
-            successor = gameState.generateSuccessor(0,action)
-            newScore = minValue(successor,0,1)
-            if newScore > currentScore:
-                returnAction, currentScore = action, newScore
-        return returnAction
+        return maxValue(gameState,-1,True)
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
